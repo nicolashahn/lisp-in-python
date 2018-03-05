@@ -1,0 +1,4 @@
+__pycache__
+*.sw*
+sample.lisp
+src/*.pyc

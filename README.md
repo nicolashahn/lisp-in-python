@@ -1,5 +1,5 @@
 # lisp-in-python
-Lisp interpreter written in Python (2)
+Lisp interpreter written in Python
 
 Follows [these requirements](http://pythonpracticeprojects.com/lisp.html)
 

@@ -1,5 +1,5 @@
 from helpers import compose
-from env import Env
+from env import Env, builtin_map
 
 g_env = Env()
 
@@ -10,7 +10,9 @@ class Proc():
         self.params, self.body, self.env = params, body, env
     
     def __call__(self, *args):
-        combined_env = Env(dict(zip(self.params, args)))
+        combined_env = Env(self.env)
+        for k, v in zip(self.params, args):
+            combined_env[k] = v
         return evaluate(self.body, combined_env)
 
 
@@ -24,23 +26,53 @@ def token_to_atom(token):
     if token == 'false': return False
     if token[0] in '1234567890':
         return token_to_num(token)
-    # TODO support strings
-    # elif token[0] in ('"',"'"):
-        # return token_to_str(token)
-    else:
-        return token
+    if token[0] is '"':
+        # just pop off " chars
+        return token[1:-1]
+    return token
 
 def code_to_tokens(code):
     """ code:str -> flat token list """
-    # TODO something will have to be done here to support strings w/spaces
-    return (code.
-        replace(',', ' ').
-        # add spaces so split() separates correctly:
-        #   bad: '(a)' -> ['(a)']
-        #   good: ' ( a ) ' -> ['(', 'a', ')']
-        replace('(', ' ( ').
-        replace(')', ' ) ').
-        split())
+    tokens = []
+    curr = ''
+    # if quote_parens > 0, we're inside a quoted list
+    quote_parens = 0
+    codelist = list(code)
+    while codelist:
+        char = codelist.pop(0)
+        if char not in (';', '"', '(', ')', ' ', '\n', "'"):
+            curr += char
+        else:
+            if char == "'":
+                tokens += ['(', 'quote']
+                quote_parens += 1
+            if char == '"':
+                curr += char
+                while codelist:
+                    strchar = codelist.pop(0)
+                    curr += strchar
+                    if strchar == '"':
+                        break
+            if char == ';':
+                if curr: tokens.append(curr)
+                curr = ''
+                while codelist:
+                    comchar = codelist.pop(0)
+                    if comchar == '\n':
+                        break
+            if curr:
+                tokens.append(curr)
+            if char in ('(', ')'):
+                if quote_parens and char is '(':
+                    quote_parens += 1
+                if quote_parens and char is ')':
+                    quote_parens -= 1
+                    if quote_parens == 1:
+                        tokens.append(')')
+                        quote_parens = 0
+                tokens.append(char)
+            curr = ''
+    return tokens
 
 def tokens_to_ast(tokens):
     """ flat list including '(', ')' -> nested list without '(', ')' """
@@ -53,7 +85,6 @@ def tokens_to_ast(tokens):
             res.append(tokens_to_ast(tokens))
         else:
             res.append(token_to_atom(token))
-    # when tokens empty exit top level list, makes this reusable recursively
     return res[0]
 
 def parse(code):
@@ -88,20 +119,31 @@ def evaluate(expr, env=g_env):
             (_, params, body) = expr
             return Proc(params, body, env)
         if first == 'cond':
-            pairs = zip(*(iter(rest),) * 2)
+            # pairs = zip(*(iter(rest),) * 2)
+            pairs = expr[1:]
             for cond, then in pairs:
                 if evaluate(cond, env) is not False:
                     return evaluate(then, env)
             return evaluate(pairs[-1][1], env)
+        if first == 'count':
+            (_, proc, l) = expr
+            return reduce(lambda acc,i: acc + 1 if evaluate(proc, env)(i) else acc, l, 0)
         if first in env:
             first = env[first]
         # procedure call
         if callable(first):
-            args = [evaluate(arg, env) for arg in rest]
-            return first(*args)
+            try:
+                args = [evaluate(arg, env) for arg in rest]
+                return first(*args)
+            except Exception as e:
+                print env.env_map
+                print expr
+                raise e
         if len(expr) == 1:
             return first
         return [evaluate(el, env) for el in expr]
+    if [evaluate(el, env) for el in expr] == expr:
+        return expr
     return evaluate([evaluate(el, env) for el in expr], env)
 
 def serialize(expr):
@@ -121,8 +163,13 @@ def interpret(code, lisp_output=False):
     if lisp_output: steps.append(serialize)
     return compose(*steps)(code)
 
-def repl():
+def repl(code=None):
     """ interactive repl """
+    if code:
+        res = interpret('(do {})'.format(code), lisp_output=True)
+        if res != 'nil': print res
+    # all env vars that are not builtin
+    # print [(k, g_env.env_map[k]) for k in g_env.env_map if k not in builtin_map]
     prompt = '> '
     print('lisp-in-python')
     while True:

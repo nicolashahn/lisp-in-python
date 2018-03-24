@@ -1,6 +1,7 @@
 import unittest
 
 from repl import (
+    g_env,
     code_to_tokens,
     tokens_to_ast,
     parse,
@@ -8,6 +9,8 @@ from repl import (
     serialize,
     interpret
 )
+
+from env import builtin_map
 
 class TestAll(unittest.TestCase):
 
@@ -75,28 +78,34 @@ class TestAll(unittest.TestCase):
     # test builtins
 
     def test_eq(self):
-        self.assertTrue(interpret('(eq? red red)'))
-        self.assertFalse(interpret('(eq? red blue)'))
-        self.assertTrue(interpret('(eq? 3 3 3)'))
-        self.assertFalse(interpret('(eq? 3 3 4)'))
+        self.assertTrue(interpret('(equal? red red)'))
+        self.assertFalse(interpret('(equal? red blue)'))
+        self.assertTrue(interpret('(equal? 3 3 3)'))
+        self.assertFalse(interpret('(equal? 3 3 4)'))
 
     def test_if(self):
         self.assertEqual(
-            interpret('(if (eq? 1 1) yes no)'),
+            interpret('(if (equal? 1 1) yes no)'),
             'yes'
         )
         self.assertEqual(
-            interpret('(if (eq? 1 2) yes no)'),
+            interpret('(if (equal? 1 2) yes no)'),
             'no'
         )
         self.assertTrue('(if true true false)')
         self.assertTrue('(if false false true)')
         self.assertTrue('(if true true)')
 
+    def test_list(self):
+        self.assertEqual(
+            interpret("(list 1 2 3)"),
+            [1, 2, 3]
+        )
+
     def test_cons(self):
         self.assertEqual(
-            interpret('(cons 1 2 3)'),
-            (1, 2, 3)
+            interpret("(cons 1 '(2 3))"),
+            [1, 2, 3]
         )
 
     def test_car(self):
@@ -108,13 +117,17 @@ class TestAll(unittest.TestCase):
     def test_cdr(self):
         self.assertEqual(
             interpret('(cdr (1 2 3))'),
-            (2, 3)
+            [2, 3]
         )
 
     def test_quote(self):
         self.assertEqual(
             interpret('(quote (+ 1 2))'),
             ['+', 1, 2]
+        )
+        self.assertEqual(
+            interpret("(cdr '(+ 1 2))"),
+            [1, 2]
         )
 
     def test_is_atom(self):
@@ -142,6 +155,10 @@ class TestAll(unittest.TestCase):
             2
         )
         self.assertEqual(
+            interpret('((lambda (y) (+ y y)) 1)'),
+            2
+        )
+        self.assertEqual(
             interpret('((lambda (fn x) (fn x x x)) + 2)'),
             6
         )
@@ -160,16 +177,16 @@ class TestAll(unittest.TestCase):
     def test_cond(self):
         self.assertEqual(
             interpret(
-            ''' (cond (eq? 1 2) no 
-                      true      yes))
+            ''' (cond ((equal? 1 2) no) 
+                      (true      yes)))
             '''),
             'yes'
         )
         self.assertEqual(
             interpret(
-            ''' (cond (eq? 1 2)         no 
-                      (eq? 1 1)         yes
-                      (eq? false true)  nono)
+            ''' (cond ((equal? 1 2)         no)
+                      ((equal? 1 1)         yes)
+                      ((equal? false true)  nono))
             '''),
             'yes'
         )
@@ -185,11 +202,121 @@ class TestAll(unittest.TestCase):
             interpret('((if true + -) 3 5)'),
             8
         )
+    def test_nested(self):
         # TODO make this throw error instead of hit max recursion depth
-        # self.assertEqual(
-            # interpret('((1 2 3))'),
-            # (1, 2, 3)
-        # )
+        self.assertEqual(
+            interpret("'((1 2 3))"),
+            [[1, 2, 3]]
+        )
 
+    def test_fib(self):
+        self.assertEqual(
+            interpret('''
+            (do 
+                (define fib
+                    (lambda n 
+                        (cond ((equal? 0 n) 1)
+                              ((equal? 1 n) 1)
+                              (else (+ (fib (- n 1)) (fib (- n 2)))))))
+                (fib 4))
+                '''),
+            5
+        )
+
+    def test_scope(self):
+        self.assertEqual(
+            interpret('''
+            (do (define x 5)
+                (define incx
+                    (lambda y (+ x y)))
+                (define x 6)
+                (incx 1)
+            )
+            '''),
+            7
+        )
+
+    def test_string(self):
+        self.assertEqual(
+            interpret('(do (define x "hello world") x)'),
+            'hello world'
+        )
+
+    def test_string_append(self):
+        self.assertEqual(
+            interpret('(string-append "hello" " " "world")'),
+            'hello world'
+        )
+
+    def test_list_ref(self):
+        self.assertEqual(
+            interpret('(list-ref (1 2 3 4) 3)'),
+            4
+        )
+
+    def test_count(self):
+        self.assertEqual(
+            interpret('''
+            (count (lambda x (equal? x 4)) (3 4 4 5)))
+            '''),
+            2
+        )
+
+    def test_str_split(self):
+        self.assertEqual(
+            interpret('(string-split "a,b,c" ",")'),
+            ['a','b','c']
+        )
+        self.assertEqual(
+            interpret('(string-split "a,,c" ",")'),
+            ['a','','c']
+        )
+        self.assertEqual(
+            interpret('(string-split "ac" ",")'),
+            ['ac']
+        )
+        self.assertEqual(
+            interpret('''
+            (string->number 
+                (car (string-split 
+                    (car (cdr (string-split "beehive(10)" "("))) ")")))
+            '''),
+            10
+        )
+
+    def test_str_to_num(self):
+        self.assertEqual(
+            interpret('(string->number "4")'),
+            4
+        )
+        self.assertEqual(
+            interpret('(string->number "4.1")'),
+            4.1
+        )
+
+    def test_comments(self):
+        self.assertEqual(
+            interpret('''
+            (1 2
+                ;asdf asdf sd fafd
+                3 4)
+            '''),
+            [1,2,3,4]
+        )
+        self.assertEqual(
+            interpret('''
+            (1 2 ;asdf asdf sd fafd
+                3 4)
+            '''),
+            [1,2,3,4]
+        )
+
+    def test_length(self):
+        self.assertEqual(
+            interpret('''
+                (length '(1 2 3))
+            '''),
+            3
+        )
 if __name__ == '__main__':
     unittest.main()

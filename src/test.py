@@ -244,6 +244,10 @@ class TestAll(unittest.TestCase):
 
     def test_string(self):
         self.assertEqual(
+            interpret('(do (define x "\\\"") x)'),
+            '"'
+        )
+        self.assertEqual(
             interpret('(do (define x "hello world") x)'),
             'hello world'
         )

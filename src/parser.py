@@ -34,7 +34,10 @@ def code_to_tokens(code):
                 curr += char
                 while codelist:
                     strchar = codelist.pop(0)
-                    curr += strchar
+                    if strchar == '\\':
+                        curr += codelist.pop(0)
+                    else:
+                        curr += strchar
                     if strchar == '"':
                         break
             if char == ';':

@@ -270,33 +270,37 @@ class TestAll(unittest.TestCase):
 
     def test_str_split(self):
         self.assertEqual(
-            interpret('(string-split "a,b,c" ",")'),
+            interpret('(str-split "a b c")'),
             ['a','b','c']
         )
         self.assertEqual(
-            interpret('(string-split "a,,c" ",")'),
+            interpret('(str-split "a,b,c" ",")'),
+            ['a','b','c']
+        )
+        self.assertEqual(
+            interpret('(str-split "a,,c" ",")'),
             ['a','','c']
         )
         self.assertEqual(
-            interpret('(string-split "ac" ",")'),
+            interpret('(str-split "ac" ",")'),
             ['ac']
         )
         self.assertEqual(
             interpret('''
-            (string->number 
-                (car (string-split 
-                    (car (cdr (string-split "beehive(10)" "("))) ")")))
+            (str->num 
+                (car (str-split 
+                    (car (cdr (str-split "beehive(10)" "("))) ")")))
             '''),
             10
         )
 
     def test_str_to_num(self):
         self.assertEqual(
-            interpret('(string->number "4")'),
+            interpret('(str->num "4")'),
             4
         )
         self.assertEqual(
-            interpret('(string->number "4.1")'),
+            interpret('(str->num "4.1")'),
             4.1
         )
 

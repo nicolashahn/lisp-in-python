@@ -1,4 +1,4 @@
-# core builtin lisp functions
+"""core builtin lisp functions"""
 
 from functools import reduce
 
@@ -51,7 +51,7 @@ def str_concat(*args):
 def list_ref(list_, i):
     return list_[i]
 
-def str_split(string, sep):
+def str_split(string, sep=' '):
     return string.split(sep)
 
 def str_to_num(string):

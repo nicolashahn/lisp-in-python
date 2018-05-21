@@ -66,4 +66,3 @@ def evaluate(expr, env=g_env):
     if [evaluate(el, env) for el in expr] == expr:
         return expr
     return evaluate([evaluate(el, env) for el in expr], env)
-

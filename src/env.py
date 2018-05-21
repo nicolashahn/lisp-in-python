@@ -15,8 +15,8 @@ builtin_map = {
     'if':               bi.if_,
     'string-append':    bi.str_concat,
     'list-ref':         bi.list_ref,
-    'string-split':     bi.str_split,
-    'string->number':   bi.str_to_num,
+    'str-split':        bi.str_split,
+    'str->num':         bi.str_to_num,
     'length':           bi.length,
     'list':             bi.list_
 }

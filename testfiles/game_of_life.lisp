@@ -6,8 +6,8 @@
 ;; (string-append str ...)      -> Concat strings
 ;; (list-ref list pos)          -> Returns the element of list at position pos
 ;; (count proc list)            -> Returns the number of elements in the list where procedure proc return true
-;; (string-split str separator) -> Split str by separator into a list of sub-strings
-;; (string->number str)         -> Convert string to number
+;; (str-split str separator) -> Split str by separator into a list of sub-strings
+;; (str->num str)         -> Convert string to number
 
 ;; Print board
 (define print-board
@@ -134,7 +134,7 @@
   (lambda (expression)
     (print-board-list
          expression
-         (run-on-board (find-board boards (car (string-split expression "(")))
-                   (string->number (car (string-split (car (cdr (string-split expression "("))) ")")))))))
+         (run-on-board (find-board boards (car (str-split expression "(")))
+                   (str->num (car (str-split (car (cdr (str-split expression "("))) ")")))))))
 
 (run "beacon(10)")

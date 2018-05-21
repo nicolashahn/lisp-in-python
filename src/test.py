@@ -1,10 +1,13 @@
 import unittest
 
-from repl import (
-    g_env,
+from parser import (
     code_to_tokens,
     tokens_to_ast,
-    parse,
+    parse
+)
+
+from repl import (
+    g_env,
     evaluate,
     serialize,
     interpret

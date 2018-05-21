@@ -6,9 +6,12 @@ from parser import (
     parse
 )
 
-from repl import (
+from evaluator import (
     g_env,
-    evaluate,
+    evaluate
+)
+
+from repl import (
     serialize,
     interpret
 )

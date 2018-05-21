@@ -40,7 +40,6 @@ def evaluate(expr, env=g_env):
             (_, params, body) = expr
             return Proc(params, body, env)
         if first == 'cond':
-            # pairs = zip(*(iter(rest),) * 2)
             pairs = expr[1:]
             for cond, then in pairs:
                 if evaluate(cond, env) is not False:

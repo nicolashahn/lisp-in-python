@@ -7,7 +7,7 @@ from parser import parse
 from evaluator import evaluate
 
 class CmdParse(cmd.Cmd):
-    """to retain history"""
+    """using Cmd so repl can use line history"""
 
     commands = []
     prompt = '> '

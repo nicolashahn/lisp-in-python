@@ -1,14 +1,12 @@
 # lisp-in-python
 Lisp interpreter written in Python (2.7)
 
-Follows [these requirements](http://pythonpracticeprojects.com/lisp.html)
-
 With inspiration from [Peter Norvig](http://norvig.com/lispy.html)
 
 Run REPL:
 
 ```
-$ ./repl.sh
+$ ./repl
 lisp-in-python
 > (define x 4)
 nil
@@ -23,7 +21,7 @@ nil
 To run tests:
 
 ```
-$ ./test.sh
+$ ./test
 ....................
 ----------------------------------------------------------------------
 Ran 20 tests in 0.002s

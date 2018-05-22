@@ -23,6 +23,13 @@ class Proc():
             combined_env[k] = v
         return evaluate(self.body, combined_env)
 
+def serialize(expr):
+    """ python list -> lisp code """
+    if expr is None: return 'nil'
+    if type(expr) is list:
+        return '(' + ' '.join(serialize(x) for x in expr) + ')'
+    return str(expr)
+
 def evaluate(expr, env=g_env):
     """ evaluate expression to value recursively """
     if type(expr) != list or expr == []:

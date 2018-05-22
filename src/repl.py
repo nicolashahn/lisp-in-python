@@ -4,7 +4,7 @@ from collections import deque
 
 from helpers import compose
 from parser import parse
-from evaluator import evaluate
+from evaluator import evaluate, serialize
 
 class CmdParse(cmd.Cmd):
     """using Cmd so repl can use line history"""

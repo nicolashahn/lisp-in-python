@@ -1,4 +1,5 @@
 from helpers import compose
+from symbols import _quote
 
 def token_to_num(token):
     return float(token) if '.' in token else int(token)
@@ -28,7 +29,7 @@ def code_to_tokens(code):
             curr += char
         else:
             if char == "'":
-                tokens += ['(', 'quote']
+                tokens += ['(', _quote]
                 quote_parens += 1
             if char == '"':
                 curr += char
